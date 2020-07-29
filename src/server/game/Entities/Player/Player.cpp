@@ -24320,6 +24320,14 @@ void Player::ProcessTerrainStatusUpdate(ZLiquidStatus status, Optional<LiquidDat
         m_MirrorTimerFlags &= ~(UNDERWATER_INWATER | UNDERWATER_INLAVA | UNDERWATER_INSLIME | UNDERWATER_INDARKWATER);
 }
 
+void Player::AtEnterCombat()
+{
+    Unit::AtEnterCombat();
+
+    for (uint8 i = 0; i < MAX_MOVE_TYPE; ++i)
+        SetSpeed((UnitMoveType)i, baseMoveSpeed[i]);
+}
+
 void Player::AtExitCombat()
 {
     Unit::AtExitCombat();
@@ -24331,6 +24339,9 @@ void Player::AtExitCombat()
             SetRuneTimer(i, 0xFFFFFFFF);
             SetLastRuneGraceTimer(i, 0);
         }
+
+    for (uint8 i = 0; i < MAX_MOVE_TYPE; ++i)
+        SetSpeed((UnitMoveType)i, playerBaseMoveSpeed[i]);
 }
 
 void Player::SetCanParry(bool value)

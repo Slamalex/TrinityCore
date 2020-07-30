@@ -8406,7 +8406,7 @@ void Player::AddSurroundingLoot(ObjectGuid guid, Loot* loot)
         for (Creature* creature : lootableCreatures)
         {
             LootItemList curCopy = creature->loot.items;
-
+            
             for (LootItem& item : curCopy)
             {
                 list.push_back(item);
@@ -8419,12 +8419,13 @@ void Player::AddSurroundingLoot(ObjectGuid guid, Loot* loot)
             if (creature->loot.gold > 0)
             {
                 loot->gold += creature->loot.gold;
-                creature->loot.gold = 0;
             }
 
-            creature->loot.unlootedCount = 0;
+            creature->loot.gold = 0;
+            creature->loot.unlootedCount = 0; // --> isLooted() == true
 
-            m_session->DoCreatureLootReleaseIgnoreDistance(creature->GetGUID());
+            creature->RemoveFlag(UNIT_DYNAMIC_FLAGS, UNIT_DYNFLAG_LOOTABLE);
+            creature->AllLootRemovedFromCorpse();
         }
     }
 }

@@ -383,54 +383,6 @@ void WorldSession::DoLootRelease(ObjectGuid lguid)
     loot->RemoveLooter(player->GetGUID());
 }
 
-void WorldSession::DoCreatureLootReleaseIgnoreDistance(ObjectGuid lguid)
-{
-    Player* player = GetPlayer();
-    Loot* loot;
-
-    player->SetLootGUID(ObjectGuid::Empty);
-    player->SendLootRelease(lguid);
-
-    player->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_LOOTING);
-
-    if (!player->IsInWorld())
-        return;
-
-    Creature* creature = GetPlayer()->GetMap()->GetCreature(lguid);
-
-    bool lootAllowed = creature && creature->IsAlive() == (player->GetClass() == CLASS_ROGUE && creature->loot.loot_type == LOOT_PICKPOCKETING);
-    if (!lootAllowed)
-        return;
-
-    loot = &creature->loot;
-    if (loot->isLooted())
-    {
-        creature->RemoveFlag(UNIT_DYNAMIC_FLAGS, UNIT_DYNFLAG_LOOTABLE);
-
-        // skip pickpocketing loot for speed, skinning timer reduction is no-op in fact
-        if (!creature->IsAlive())
-            creature->AllLootRemovedFromCorpse();
-
-        loot->clear();
-    }
-    else
-    {
-        // if the round robin player release, reset it.
-        if (player->GetGUID() == loot->roundRobinPlayer)
-        {
-            loot->roundRobinPlayer.Clear();
-
-            if (Group* group = player->GetGroup())
-                group->SendLooter(creature, nullptr);
-        }
-        // force dynflag update to update looter and lootable info
-        creature->ForceValuesUpdateAtIndex(UNIT_DYNAMIC_FLAGS);
-    }
-
-    //Player is not looking at loot list, he doesn't need to see updates on the loot list
-    loot->RemoveLooter(player->GetGUID());
-}
-
 void WorldSession::HandleLootMasterGiveOpcode(WorldPacket& recvData)
 {
     uint8 slotid;

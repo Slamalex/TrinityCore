@@ -8409,7 +8409,30 @@ void Player::AddSurroundingLoot(ObjectGuid guid, Loot* loot)
             
             for (LootItem& item : curCopy)
             {
-                list.push_back(item);
+                // TODO: Check if item exists in list, and add item.count to that item's count if it does.
+
+                auto it = std::find_if(list.begin(), list.end(), [&item](const LootItem& a) -> bool {
+                    return item.itemid == a.itemid;
+                });
+
+                if (it != list.end())
+                {
+                    uint32 maxStack = sObjectMgr->GetItemTemplate(item.itemid)->GetMaxStackSize();
+
+                    it->count += item.count;
+
+                    if (it->count > maxStack)
+                    {
+                        uint32 diff = it->count - maxStack;
+                        it->count = maxStack;
+                        item.count = diff;
+
+                        list.push_back(item);
+                    }
+                }
+                else
+                    list.push_back(item);
+
                 std::remove(
                     creature->loot.items.begin(),
                     creature->loot.items.end(),
@@ -8417,9 +8440,7 @@ void Player::AddSurroundingLoot(ObjectGuid guid, Loot* loot)
             }
 
             if (creature->loot.gold > 0)
-            {
                 loot->gold += creature->loot.gold;
-            }
 
             creature->loot.gold = 0;
             creature->loot.unlootedCount = 0; // --> isLooted() == true

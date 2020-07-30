@@ -1891,6 +1891,7 @@ class TC_GAME_API Player : public Unit, public GridObject<Player>
         PlayerMenu* PlayerTalkClass;
         std::vector<ItemSetEffect*> ItemSetEff;
 
+        void AddSurroundingLoot(ObjectGuid guid, Loot* loot);
         void SendLoot(ObjectGuid guid, LootType loot_type);
         void SendLootError(ObjectGuid guid, LootError error) const;
         void SendLootRelease(ObjectGuid guid) const;
@@ -2171,6 +2172,8 @@ class TC_GAME_API Player : public Unit, public GridObject<Player>
 
         std::string GetMapAreaAndZoneString() const;
         std::string GetCoordsMapAreaAndZoneString() const;
+
+        template<class NOTIFIER> void VisitNearbyGridObject(float const& radius, NOTIFIER& notifier) const { if (IsInWorld()) GetMap()->VisitGrid(GetPositionX(), GetPositionY(), radius, notifier); }
 
         std::string GetDebugInfo() const override;
 

@@ -495,6 +495,7 @@ class TC_GAME_API Map : public GridRefManager<NGridType>
         void RemoveFromActive(T* obj);
 
         template<class T> void SwitchGridContainers(T* obj, bool on);
+        template<class NOTIFIER> void VisitGrid(const float& x, const float& y, float radius, NOTIFIER& notifier);
         std::unordered_map<ObjectGuid::LowType /*leaderSpawnId*/, CreatureGroup*> CreatureGroupHolder;
 
         void UpdateIteratorBack(Player* player);
@@ -982,5 +983,16 @@ inline void Map::Visit(Cell const& cell, TypeContainerVisitor<T, CONTAINER>& vis
         EnsureGridLoaded(cell);
         getNGrid(x, y)->VisitGrid(cell_x, cell_y, visitor);
     }
+}
+
+template<class NOTIFIER>
+inline void Map::VisitGrid(const float& x, const float& y, float radius, NOTIFIER& notifier)
+{
+    CellCoord p(Trinity::ComputeCellCoord(x, y));
+    Cell cell(p);
+    cell.SetNoCreate();
+
+    TypeContainerVisitor<NOTIFIER, GridTypeMapContainer >  grid_object_notifier(notifier);
+    cell.Visit(p, grid_object_notifier, *this, radius, x, y);
 }
 #endif

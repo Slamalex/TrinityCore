@@ -534,6 +534,7 @@ class TC_GAME_API WorldSession
         void BuildPartyMemberStatsChangedPacket(Player* player, WorldPacket* data);
 
         void DoLootRelease(ObjectGuid lguid);
+        void DoCreatureLootReleaseIgnoreDistance(ObjectGuid lguid);
 
         // Account mute time
         bool CanSpeak() const;

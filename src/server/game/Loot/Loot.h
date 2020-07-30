@@ -148,6 +148,23 @@ struct TC_GAME_API LootItem
                  freeforall(false), is_underthreshold(false), is_counted(false), needs_quest(false), follow_loot_rules(false)
                  { };
 
+    bool operator==(const LootItem& r) const {
+        return itemid == r.itemid
+            && randomSuffix == r.randomSuffix
+            && randomPropertyId == r.randomPropertyId
+            && std::equal(conditions.begin(), conditions.end(), r.conditions.begin(), r.conditions.end())
+            && std::equal(allowedGUIDs.begin(), allowedGUIDs.end(), r.allowedGUIDs.begin(), r.allowedGUIDs.end())
+            && rollWinnerGUID == r.rollWinnerGUID
+            && count == r.count
+            && is_looted == r.is_looted
+            && is_blocked == r.is_blocked
+            && freeforall == r.freeforall
+            && is_underthreshold == r.is_underthreshold
+            && is_counted == r.is_counted
+            && needs_quest == r.needs_quest
+            && follow_loot_rules == r.follow_loot_rules;
+    }
+
     // Basic checks for player/item compatibility - if false no chance to see the item in the loot
     bool AllowedForPlayer(Player const* player, bool isGivenByMasterLooter = false) const;
     void AddAllowedLooter(Player const* player);

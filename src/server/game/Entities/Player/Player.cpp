@@ -8368,8 +8368,70 @@ void Player::SendLootRelease(ObjectGuid guid) const
     SendDirectMessage(&data);
 }
 
+class AoELootCreatureCheck
+{
+public:
+    static float constexpr LootDistance = INTERACTION_DISTANCE * 6.0f;
+
+    AoELootCreatureCheck(
+        Player* looter,
+        ObjectGuid mainTarget)
+        : looter(looter)
+        , mainTarget(mainTarget) {}
+
+    bool operator()(Creature* creature) const
+    {
+        return !creature->IsAlive()
+            && creature->GetGUID() != mainTarget
+            && looter->IsWithinDist(creature, LootDistance)
+            && looter->isAllowedToLoot(creature);
+    }
+
+    Player* looter;
+    ObjectGuid mainTarget;
+};
+
+void Player::AddSurroundingLoot(ObjectGuid guid, Loot* loot)
+{
+    std::list<Creature*> lootableCreatures;
+    AoELootCreatureCheck check(this, guid);
+    Trinity::CreatureListSearcher<AoELootCreatureCheck> searcher(this, lootableCreatures, check);
+
+    VisitNearbyGridObject(AoELootCreatureCheck::LootDistance, searcher);
+
+    if (!lootableCreatures.empty())
+    {
+        LootItemList& list = loot->items;
+
+        for (Creature* creature : lootableCreatures)
+        {
+            LootItemList curCopy = creature->loot.items;
+
+            for (LootItem& item : curCopy)
+            {
+                list.push_back(item);
+                std::remove(
+                    creature->loot.items.begin(),
+                    creature->loot.items.end(),
+                    item);
+            }
+
+            if (creature->loot.gold > 0)
+            {
+                loot->gold += creature->loot.gold;
+                creature->loot.gold = 0;
+            }
+
+            creature->loot.unlootedCount = 0;
+
+            m_session->DoCreatureLootReleaseIgnoreDistance(creature->GetGUID());
+        }
+    }
+}
+
 void Player::SendLoot(ObjectGuid guid, LootType loot_type)
 {
+    // Release previous loot
     if (ObjectGuid lguid = GetLootGUID())
         m_session->DoLootRelease(lguid);
 
@@ -8742,6 +8804,8 @@ void Player::SendLoot(ObjectGuid guid, LootType loot_type)
     if (permission != NONE_PERMISSION)
     {
         SetLootGUID(guid);
+
+        AddSurroundingLoot(guid, loot);
 
         WorldPacket data(SMSG_LOOT_RESPONSE, (9 + 50));           // we guess size
         data << uint64(guid);

@@ -8437,12 +8437,10 @@ void Player::AddSurroundingLoot(ObjectGuid guid, Loot* loot)
                 }
                 else // else we can just push a new entry
                     list.push_back(item);
-
-                std::remove(
-                    creature->loot.items.begin(),
-                    creature->loot.items.end(),
-                    item);
             }
+
+            creature->loot.items.clear();
+            creature->loot.quest_items.clear();
 
             if (creature->loot.gold > 0)
                 loot->gold += creature->loot.gold;

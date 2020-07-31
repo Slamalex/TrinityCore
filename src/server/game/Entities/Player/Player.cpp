@@ -8394,6 +8394,7 @@ public:
 void Player::AddSurroundingLoot(ObjectGuid guid, Loot* loot)
 {
     std::list<Creature*> lootableCreatures;
+    // Ignores the creature with the GUID guid
     AoELootCreatureCheck check(this, guid);
     Trinity::CreatureListSearcher<AoELootCreatureCheck> searcher(this, lootableCreatures, check);
 
@@ -8405,22 +8406,26 @@ void Player::AddSurroundingLoot(ObjectGuid guid, Loot* loot)
 
         for (Creature* creature : lootableCreatures)
         {
-            LootItemList curCopy = creature->loot.items;
-            
-            for (LootItem& item : curCopy)
-            {
-                // TODO: Check if item exists in list, and add item.count to that item's count if it does.
+            std::vector<LootItem> items;
+            items.reserve(creature->loot.items.size() + creature->loot.quest_items.size());
 
+            items.insert(items.end(), creature->loot.items.begin(), creature->loot.items.end());
+            items.insert(items.end(), creature->loot.quest_items.begin(), creature->loot.quest_items.end());
+
+            for (LootItem& item : items)
+            {
                 auto it = std::find_if(list.begin(), list.end(), [&item](const LootItem& a) -> bool {
                     return item.itemid == a.itemid;
                 });
 
+                // If item exists in list, add item.count to that item's count.
                 if (it != list.end())
                 {
                     uint32 maxStack = sObjectMgr->GetItemTemplate(item.itemid)->GetMaxStackSize();
 
                     it->count += item.count;
 
+                    // Add another entry if max stack size exceeded
                     if (it->count > maxStack)
                     {
                         uint32 diff = it->count - maxStack;
@@ -8430,7 +8435,7 @@ void Player::AddSurroundingLoot(ObjectGuid guid, Loot* loot)
                         list.push_back(item);
                     }
                 }
-                else
+                else // else we can just push a new entry
                     list.push_back(item);
 
                 std::remove(

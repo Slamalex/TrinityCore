@@ -21750,6 +21750,13 @@ inline bool Player::_StoreOrEquipNewItem(uint32 vendorslot, uint32 item, uint8 c
         data << int32(crItem->maxcount > 0 ? new_count : 0xFFFFFFFF);
         data << uint32(count);
         SendDirectMessage(&data);
+
+        uint32 randomSuffix = GenerateEnchSuffixFactor(it->GetEntry());
+        int32 randomPropertyId = GenerateItemRandomPropertyId(it->GetEntry());
+
+        it->UpdateItemSuffixFactor();
+        it->SetItemRandomProperties(randomPropertyId);
+
         SendNewItem(it, pProto->BuyCount * count, true, false, false);
 
         if (!bStore)

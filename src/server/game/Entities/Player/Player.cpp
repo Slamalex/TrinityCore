@@ -8402,24 +8402,19 @@ void Player::AddSurroundingLoot(ObjectGuid guid, Loot* loot)
 
     if (!lootableCreatures.empty())
     {
-        LootItemList& list = loot->items;
+        LootItemList& itemList = loot->items;
+        LootItemList& qItemList = loot->quest_items;
 
         for (Creature* creature : lootableCreatures)
         {
-            std::vector<LootItem> items;
-            items.reserve(creature->loot.items.size() + creature->loot.quest_items.size());
-
-            items.insert(items.end(), creature->loot.items.begin(), creature->loot.items.end());
-            items.insert(items.end(), creature->loot.quest_items.begin(), creature->loot.quest_items.end());
-
-            for (LootItem& item : items)
+            for (LootItem& item : creature->loot.items)
             {
-                auto it = std::find_if(list.begin(), list.end(), [&item](const LootItem& a) -> bool {
+                auto it = std::find_if(itemList.begin(), itemList.end(), [&item](const LootItem& a) -> bool {
                     return item.itemid == a.itemid;
                 });
 
                 // If item exists in list, add item.count to that item's count.
-                if (it != list.end())
+                if (it != itemList.end())
                 {
                     uint32 maxStack = sObjectMgr->GetItemTemplate(item.itemid)->GetMaxStackSize();
 
@@ -8432,14 +8427,41 @@ void Player::AddSurroundingLoot(ObjectGuid guid, Loot* loot)
                         it->count = maxStack;
                         item.count = diff;
 
-                        list.push_back(item);
+                        itemList.push_back(item);
                     }
                 }
                 else // else we can just push a new entry
-                    list.push_back(item);
+                    itemList.push_back(item);
             }
-
             creature->loot.items.clear();
+
+
+            for (LootItem& item : creature->loot.quest_items)
+            {
+                auto it = std::find_if(qItemList.begin(), qItemList.end(), [&item](const LootItem& a) -> bool {
+                    return item.itemid == a.itemid;
+                });
+
+                // If item exists in list, add item.count to that item's count.
+                if (it != qItemList.end())
+                {
+                    uint32 maxStack = sObjectMgr->GetItemTemplate(item.itemid)->GetMaxStackSize();
+
+                    it->count += item.count;
+
+                    // Add another entry if max stack size exceeded
+                    if (it->count > maxStack)
+                    {
+                        uint32 diff = it->count - maxStack;
+                        it->count = maxStack;
+                        item.count = diff;
+
+                        qItemList.push_back(item);
+                    }
+                }
+                else // else we can just push a new entry
+                    qItemList.push_back(item);
+            }
             creature->loot.quest_items.clear();
 
             if (creature->loot.gold > 0)

@@ -676,6 +676,22 @@ bool Unit::HasBreakableByDamageCrowdControlAura(Unit* excludeCasterChannel) cons
 
 /*static*/ uint32 Unit::DealDamage(Unit* attacker, Unit* victim, uint32 damage, CleanDamage const* cleanDamage, DamageEffectType damagetype, SpellSchoolMask damageSchoolMask, SpellInfo const* spellProto, bool durabilityLoss)
 {
+    if (attacker->GetTypeId() == TYPEID_PLAYER)
+    {
+        if (attacker->ToPlayer()->GetMap()->IsDungeon())
+        {
+            damage *= 3;
+        }
+    }
+
+    if (victim->GetTypeId() == TYPEID_PLAYER)
+    {
+        if (victim->ToPlayer()->GetMap()->IsDungeon())
+        {
+            damage /= 3;
+        }
+    }
+
     uint32 rage_damage = damage + (cleanDamage ? cleanDamage->absorbed_damage : 0);
 
     if (UnitAI* victimAI = victim->GetAI())

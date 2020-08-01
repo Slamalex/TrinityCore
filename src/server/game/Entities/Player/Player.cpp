@@ -8435,7 +8435,6 @@ void Player::AddSurroundingLoot(ObjectGuid guid, Loot* loot)
             }
             creature->loot.items.clear();
 
-
             for (LootItem& item : creature->loot.quest_items)
             {
                 auto it = std::find_if(qItemList.begin(), qItemList.end(), [&item](const LootItem& a) -> bool {
@@ -8852,7 +8851,8 @@ void Player::SendLoot(ObjectGuid guid, LootType loot_type)
     {
         SetLootGUID(guid);
 
-        AddSurroundingLoot(guid, loot);
+        if (guid.IsCreature())
+            AddSurroundingLoot(guid, loot);
 
         WorldPacket data(SMSG_LOOT_RESPONSE, (9 + 50));           // we guess size
         data << uint64(guid);
